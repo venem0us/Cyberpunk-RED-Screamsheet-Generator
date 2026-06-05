@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Screamsheet Generator // Cyberpunk RED</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=VT323&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* ─── Reset & Variables ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg-300: #1e181e;
+      --bg-500: #191a1e;
+      --pri-200: #f4908b;
+      --pri-300: #ea6f69;
+      --pri-500: #e8615a;
+      --pri-600: #9c3230;
+      --pri-700: #5e2122;
+      --pri-800: #451717;
+      --pri-900: #3c181a;
+      --sec-500: #2be4ea;
+      --sec-900: #295459;
+      --ter-500: #fed33f;
+      --act-500: #2bfea0;
+      --fp: "Rajdhani", sans-serif;
+      --fs: "VT323", monospace;
+      --notch: 1rem;
+      --notch-h: 22.627416px;
+      --notch-path: polygon(
+        0 0, 100% 0,
+        100% calc(100% - var(--notch) + 2px),
+        calc(100% - var(--notch) + 2px) 100%,
+        0 100%
+      );
+    }
+
+    html, body {
+      margin: 0; padding: 0;
+      background-color: var(--bg-500);
+      background-image: radial-gradient(ellipse at 33% 10%, #461616 0%, transparent 75%);
+      background-attachment: fixed;
+      color: var(--pri-500);
+      font-family: var(--fp);
+      font-size: 100%;
+      line-height: 1.4;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-500); }
+    ::-webkit-scrollbar-thumb { background: var(--pri-700); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--pri-600); }
+
+    /* ─── Header ────────────────────────────────────────────────── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem 0.5rem;
+      border-bottom: 2px solid var(--pri-500);
+      box-shadow: 0 0 8px var(--pri-500);
+      background-color: var(--bg-300);
+    }
+
+    .app-title {
+      font-family: var(--fs);
+      font-size: 1.9rem;
+      letter-spacing: 0.08rem;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px var(--pri-500), 0 0 4px var(--pri-300);
+      animation: flicker 9s infinite;
+      line-height: 1;
+    }
+    .app-subtitle {
+      font-family: var(--fs);
+      font-size: 0.9rem;
+      color: var(--sec-500);
+      letter-spacing: 0.05rem;
+      opacity: 0.8;
+    }
+
+    @keyframes flicker {
+      0%,94%,100% { opacity:1; }
+      95% { opacity:.75; }
+      96% { opacity:1; }
+      97% { opacity:.6; }
+      98% { opacity:1; }
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .app-container {
+      display: grid;
+      grid-template-columns: 270px 1fr 300px;
+      grid-template-areas: "left center right";
+      gap: 0.75rem;
+      padding: 0.75rem;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .panel-left  { grid-area: left;   overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; }
+    .panel-center{ grid-area: center; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; }
+    .panel-right { grid-area: right;  overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; }
+
+    /* ─── Panel sections ────────────────────────────────────────── */
+    .pane {
+      background-color: var(--bg-300);
+      border: 1.5px solid var(--pri-600);
+      position: relative;
+      clip-path: var(--notch-path);
+      flex-shrink: 0;
+    }
+    .pane::before {
+      content: "";
+      display: block;
+      position: absolute;
+      background-color: var(--pri-600);
+      bottom: 4px;
+      right: -5px;
+      height: 3px;
+      width: var(--notch-h);
+      transform: rotate(-45deg);
+      z-index: 20;
+    }
+
+    .pane-header {
+      background-color: var(--pri-800);
+      border-bottom: 1px solid var(--pri-700);
+      padding: 0.35rem 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pane-title {
+      font-family: var(--fs);
+      font-size: 1rem;
+      color: var(--pri-200);
+      text-transform: uppercase;
+      letter-spacing: 0.08rem;
+    }
+    .pane-body {
+      padding: 0.6rem 0.65rem calc(var(--notch) + 0.3rem);
+    }
+
+    /* ─── Buttons ───────────────────────────────────────────────── */
+    .btn {
+      background: transparent;
+      border: 1px solid var(--pri-500);
+      border-radius: 2px;
+      color: var(--pri-500);
+      cursor: pointer;
+      font-family: var(--fp);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.65rem;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .btn:hover { background-color: var(--pri-800); color: var(--pri-200); }
+
+    .btn-cyan {
+      border-color: var(--sec-500);
+      color: var(--sec-500);
+      position: relative;
+      clip-path: var(--notch-path);
+      padding-right: calc(var(--notch) + 0.4rem);
+      padding-bottom: calc(var(--notch) + 0.1rem);
+    }
+    .btn-cyan::before {
+      content: "";
+      display: block;
+      position: absolute;
+      background-color: var(--sec-500);
+      bottom: 4px;
+      right: -5px;
+      height: 2px;
+      width: var(--notch-h);
+      transform: rotate(-45deg);
+      z-index: 20;
+    }
+    .btn-cyan:hover { background-color: var(--sec-900); }
+
+    .btn-gold {
+      border-color: var(--ter-500);
+      color: var(--ter-500);
+      font-size: 0.78rem;
+      padding: 0.2rem 0.45rem;
+    }
+    .btn-gold:hover { background-color: rgba(254,211,63,0.1); }
+
+    .btn-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    /* ─── Article type buttons ──────────────────────────────────── */
+    .type-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.65rem;
+      margin-bottom: 0.35rem;
+      border: 1px solid var(--pri-700);
+      border-radius: 2px;
+    }
+    .type-btn .label-tag {
+      font-family: var(--fs);
+      font-size: 0.85rem;
+      color: var(--sec-500);
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+    .type-btn.active {
+      background-color: #391419;
+      border-color: var(--pri-500);
+      color: var(--pri-200);
+    }
+
+    /* ─── Dice display ──────────────────────────────────────────── */
+    .dice-val {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border: 1px solid var(--ter-500);
+      color: var(--ter-500);
+      font-family: var(--fs);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── Content entries ───────────────────────────────────────── */
+    .entry {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 0.2rem;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      transition: background 0.15s;
+    }
+    .entry:hover { background-color: var(--pri-900); border-color: var(--pri-700); }
+    .entry.active { background-color: #391419; border-color: var(--pri-500); }
+    .entry .num {
+      font-family: var(--fs);
+      color: var(--ter-500);
+      font-size: 1rem;
+      margin-right: 0.3rem;
+    }
+
+    /* ─── Article display ───────────────────────────────────────── */
+    .article-wrap {
+      flex: 1;
+      min-height: 0;
+    }
+    .article-source {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .source-badge {
+      font-family: var(--fs);
+      font-size: 0.9rem;
+      padding: 0.15em 0.5em;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid;
+      transition: background 0.15s;
+    }
+    .source-badge.nct {
+      border-color: var(--sec-500);
+      color: var(--sec-500);
+    }
+    .source-badge.nct.active { background-color: var(--sec-900); }
+    .source-badge.ao {
+      border-color: var(--ter-500);
+      color: var(--ter-500);
+    }
+    .source-badge.ao.active { background-color: rgba(254,211,63,0.12); }
+
+    .article-output {
+      padding: 1rem 1.2rem calc(var(--notch) + 0.5rem);
+      min-height: 300px;
+      font-size: 0.97rem;
+      line-height: 1.65;
+      position: relative;
+    }
+
+    .art-headline {
+      font-family: var(--fs);
+      font-size: 1.7rem;
+      color: var(--pri-200);
+      text-transform: uppercase;
+      letter-spacing: 0.04rem;
+      margin-bottom: 0.35rem;
+      text-shadow: 0 0 12px var(--pri-500);
+      line-height: 1.1;
+    }
+    .art-byline {
+      font-family: var(--fs);
+      font-size: 0.92rem;
+      color: var(--sec-500);
+      border-bottom: 1px solid var(--pri-700);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .art-sep {
+      text-align: center;
+      color: var(--pri-700);
+      margin: 0.5rem 0;
+      font-size: 0.8rem;
+      letter-spacing: 0.2rem;
+    }
+    .art-p { margin-bottom: 0.7rem; }
+
+    .placeholder-msg {
+      color: var(--pri-700);
+      font-family: var(--fs);
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 3rem 1rem;
+      line-height: 1.8;
+    }
+
+    /* Bracket fields */
+    .fld-empty {
+      background-color: rgba(43,228,234,0.08);
+      border: 1px solid var(--sec-500);
+      border-radius: 2px;
+      color: var(--sec-500);
+      padding: 0 0.2rem;
+      font-size: 0.88em;
+    }
+    .fld-filled {
+      background-color: rgba(254,211,63,0.1);
+      border: 1px dashed var(--ter-500);
+      border-radius: 2px;
+      color: var(--ter-500);
+      padding: 0 0.2rem;
+    }
+
+    /* ─── Headlines ─────────────────────────────────────────────── */
+    .hl-item {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 0.2rem;
+      font-size: 0.83rem;
+      transition: background 0.15s;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+    .hl-item:hover { background-color: var(--pri-900); border-color: var(--pri-700); }
+    .hl-item.active { background-color: #391419; border-color: var(--pri-500); }
+    .hl-item.suggested { border-color: var(--ter-500); }
+    .hl-code {
+      font-family: var(--fs);
+      color: var(--ter-500);
+      font-size: 1rem;
+      flex-shrink: 0;
+      min-width: 2.5rem;
+    }
+
+    /* ─── Fields form ───────────────────────────────────────────── */
+    .field-row { margin-bottom: 0.55rem; }
+    .field-lbl {
+      display: block;
+      font-family: var(--fs);
+      font-size: 0.88rem;
+      color: var(--sec-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05rem;
+      margin-bottom: 0.15rem;
+    }
+    .field-inp {
+      width: 100%;
+      background-color: var(--bg-500);
+      border: 1px solid var(--pri-700);
+      border-radius: 2px;
+      color: var(--pri-500);
+      font-family: var(--fp);
+      font-size: 0.88rem;
+      padding: 0.3rem 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-inp:focus { border-color: var(--sec-500); box-shadow: 0 0 4px var(--sec-500); }
+
+    /* ─── Bylines ───────────────────────────────────────────────── */
+    .byline-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 0.15rem;
+      transition: background 0.15s;
+      font-size: 0.82rem;
+    }
+    .byline-item:hover { background-color: var(--pri-900); border-color: var(--pri-700); }
+    .byline-item.active { background-color: #391419; border-color: var(--pri-500); }
+    .byline-name { color: var(--pri-300); font-weight: 700; min-width: 110px; flex-shrink: 0; }
+    .byline-beat { color: var(--sec-500); font-size: 0.78rem; }
+
+    /* ─── Scanline overlay ──────────────────────────────────────── */
+    .panel-center::after {
+      content: "";
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ─── Toast notification ────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(4rem);
+      background-color: var(--pri-800);
+      border: 1px solid var(--act-500);
+      color: var(--act-500);
+      font-family: var(--fs);
+      font-size: 1rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 2px;
+      transition: transform 0.3s;
+      z-index: 9999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── Site header ───────────────────────────────────────────── */
+    .site-header {
+      text-align: center;
+      padding: 0.55rem 1rem;
+      background-color: var(--bg-300);
+      border-bottom: 1px solid var(--pri-700);
+    }
+    .site-header a {
+      text-decoration: none;
+      color: var(--sec-500);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: opacity 0.15s;
+    }
+    .site-header a:hover { opacity: 0.8; }
+    .site-header h1 {
+      font-family: var(--fs);
+      font-size: 1.4rem;
+      margin: 0;
+      letter-spacing: 0.06rem;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px var(--sec-500);
+      line-height: 1;
+    }
+
+    /* ─── Site footer ───────────────────────────────────────────── */
+    .site-footer {
+      text-align: center;
+      padding: 0.5rem 1.5rem;
+      background-color: var(--bg-300);
+      border-top: 1px solid var(--pri-700);
+      font-size: 0.72rem;
+      color: var(--pri-500);
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    /* ─── Hide scanline during image capture ───────────────────── */
+    .panel-center.no-scanline::after { display: none !important; }
+
+    /* ─── Print styles ──────────────────────────────────────────── */
+    @media print {
+      body { background: #fff; color: #111; }
+      .panel-left, .panel-right, .app-header, .article-source,
+      .panel-center::after { display: none !important; }
+      .app-container { display: block; padding: 0; height: auto; }
+      .panel-center { overflow: visible; }
+      .pane { border: 1px solid #ccc; clip-path: none; background: #fff; }
+      .pane::before { display: none; }
+      .art-headline { color: #111; text-shadow: none; }
+      .art-byline { color: #555; }
+      .fld-empty { color: #777; border-color: #aaa; background: transparent; }
+      .fld-filled { color: #111; border-color: #aaa; background: transparent; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ───────────────────────────────────────────────── -->
+<header class="app-header">
+  <div>
+    <div class="app-title">▶ Screamsheet Generator</div>
+    <div class="app-subtitle">Cyberpunk RED &nbsp;// &nbsp;Creating Headlines for Your Campaign</div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-cyan" onclick="rollAll()">⚄ &nbsp;Roll Everything</button>
+    <button class="btn" onclick="copyArticle()" title="Copy plain text to clipboard">⎘ Copy</button>
+    <button class="btn" onclick="resetAll()">↺ Reset</button>
+    <button class="btn" onclick="window.print()">⎙ Print</button>
+    <button class="btn" onclick="saveImage()" title="Save article as PNG image">⬇ Save Image</button>
+  </div>
+</header>
+
+<!-- ─── App Container ─────────────────────────────────────────── -->
+<div class="app-container">
+
+  <!-- ═══ LEFT PANEL ═══════════════════════════════════════════ -->
+  <div class="panel-left">
+
+    <!-- Article Type -->
+    <div class="pane">
+      <div class="pane-header">
+        <span class="pane-title">Step 1 &nbsp;// &nbsp;Article Type</span>
+        <button class="btn btn-gold" onclick="rollType()">⚄ d6</button>
+      </div>
+      <div class="pane-body">
+        <button class="btn type-btn" id="tbtn-newsflash" onclick="selectType('newsflash')">
+          <span class="label-tag">1–2 // Table B</span>
+          News Flash! (Violence &amp; Mishaps)
+        </button>
+        <button class="btn type-btn" id="tbtn-neonlights" onclick="selectType('neonlights')">
+          <span class="label-tag">3–4 // Table C</span>
+          In Neon Lights! (Entertainment)
+        </button>
+        <button class="btn type-btn" id="tbtn-helpwanted" onclick="selectType('helpwanted')">
+          <span class="label-tag">5–6 // Table D</span>
+          Help Wanted!
+        </button>
+      </div>
+    </div>
+
+    <!-- Intro -->
+    <div class="pane" id="sec-intro" style="display:none">
+      <div class="pane-header">
+        <span class="pane-title">Step 2A &nbsp;// &nbsp;Intro</span>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span class="dice-val" id="dv-intro">–</span>
+          <button class="btn btn-gold" onclick="rollSection('intro')">⚄</button>
+        </div>
+      </div>
+      <div class="pane-body" id="entries-intro"></div>
+    </div>
+
+    <!-- Body -->
+    <div class="pane" id="sec-body" style="display:none">
+      <div class="pane-header">
+        <span class="pane-title">Step 2B &nbsp;// &nbsp;Body</span>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span class="dice-val" id="dv-body">–</span>
+          <button class="btn btn-gold" onclick="rollSection('body')">⚄</button>
+        </div>
+      </div>
+      <div class="pane-body" id="entries-body"></div>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="pane" id="sec-conclusion" style="display:none">
+      <div class="pane-header">
+        <span class="pane-title">Step 2C &nbsp;// &nbsp;Conclusion</span>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span class="dice-val" id="dv-conclusion">–</span>
+          <button class="btn btn-gold" onclick="rollSection('conclusion')">⚄</button>
+        </div>
+      </div>
+      <div class="pane-body" id="entries-conclusion"></div>
+    </div>
+
+  </div><!-- /panel-left -->
+
+  <!-- ═══ CENTER PANEL ══════════════════════════════════════════ -->
+  <div class="panel-center">
+
+    <!-- Source toggle -->
+    <div class="article-source">
+      <span style="font-family:var(--fs);font-size:0.9rem;color:var(--pri-700)">Source:</span>
+      <span class="source-badge nct active" id="src-nct" onclick="setSource('nct')">▶ Night City Today News</span>
+      <span class="source-badge ao" id="src-ao" onclick="setSource('ao')">▶ The Augmented Optic</span>
+    </div>
+
+    <!-- Article output -->
+    <div class="pane article-wrap">
+      <div class="article-output" id="article-out">
+        <div class="placeholder-msg" id="ph-msg">
+          Select an article type &amp; roll content<br />to generate your Screamsheet...
+        </div>
+        <div id="art-content" style="display:none">
+          <div class="art-headline" id="art-hl"></div>
+          <div class="art-byline" id="art-byl"></div>
+          <div id="art-intro"></div>
+          <div class="art-sep" id="art-sep1" style="display:none">• • •</div>
+          <div id="art-body"></div>
+          <div class="art-sep" id="art-sep2" style="display:none">• • •</div>
+          <div id="art-conc"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-center -->
+
+  <!-- ═══ RIGHT PANEL ═══════════════════════════════════════════ -->
+  <div class="panel-right">
+
+    <!-- Headlines -->
+    <div class="pane" id="sec-headlines" style="display:none">
+      <div class="pane-header">
+        <span class="pane-title">Step 3 &nbsp;// &nbsp;Headline</span>
+        <span style="font-family:var(--fs);color:var(--ter-500);font-size:0.8rem">★ = suggested</span>
+      </div>
+      <div class="pane-body" id="hl-list"></div>
+    </div>
+
+    <!-- Fill Details -->
+    <div class="pane" id="sec-fields" style="display:none">
+      <div class="pane-header">
+        <span class="pane-title">Step 4 &nbsp;// &nbsp;Fill Details</span>
+        <button class="btn btn-gold" onclick="clearFields()" title="Clear all">✕ Clear</button>
+      </div>
+      <div class="pane-body" id="fields-form"></div>
+    </div>
+
+    <!-- Byline -->
+    <div class="pane">
+      <div class="pane-header">
+        <span class="pane-title">Byline</span>
+        <button class="btn btn-gold" onclick="randomByline()">⚄ random</button>
+      </div>
+      <div class="pane-body" id="byline-list"></div>
+    </div>
+
+  </div><!-- /panel-right -->
+
+</div><!-- /app-container -->
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   TABLE DATA
+═══════════════════════════════════════════════════════════════ */
+
+const BYLINES = [
+  { name: "Angie Wu 2.0",         beat: "Night City people and history" },
+  { name: "G.F. Bits",            beat: "Cyberware news and information" },
+  { name: "Jackie McGee",         beat: "Corporate beat" },
+  { name: "J.E. Munroe",          beat: "Public interest news stories" },
+  { name: "Jericho Hunt",         beat: "Anything to earn enough money to eat. Secret subversive." },
+  { name: "Jumpshot",             beat: "Freelance \"combat zone\" journalist" },
+  { name: "Kelly Oddmeyer",       beat: "Music and entertainment" },
+  { name: "Lana Smithee",         beat: "Generic byline used by Augmented Optic writers" },
+  { name: "Lindsey Tabor",        beat: "Education and Night City University" },
+  { name: "Miller Marcus",        beat: "Technology reporter" },
+  { name: "Thompson",             beat: "Pseudonym used by journalists who want to remain anonymous" },
+  { name: "Ziggy \"Front\" Page", beat: "All around journalist" },
+];
+
+/* ── News Flash (B) ─────────────────────────────────────────── */
+const B1 = [
+  `As our regular readers may recall, [Name 1], a prominent [Relationship or Job Title] of [Group 1], was reported missing [Number] weeks ago after the [Incident] at [Location]. [Group 1] has offered a reward for any information leading to [Name 1]'s safe return, but little progress has been made since their disappearance.`,
+  `"It all happened so suddenly!" bystanders said about the incident [Day of the Week] [Time of Day].`,
+  `"We never could have planned for this," [Group 1]'s spokesperson commented in the wake of the recent disaster.`,
+  `Every district has rougher sections, but it seems that [Location (Neighborhood)] has seen more than its share of trouble lately. Last week, we brought you news of the battle between [Group 1] and [Group 2], but it seems that was only the start of the trouble.`,
+  `Well, choombas... It's finally happened. We've been bringing you tales of the growing rivalry between [Group 1] and [Group 2] for weeks.`,
+  `Ongoing tensions between [Group 1] and [Group 2] finally boiled over this week in [Location (Neighborhood)]. The fight lasted only a matter of minutes but left tragic results in its wake.`,
+];
+
+const B2 = [
+  `[Name 1]'s name has become a household word in recent weeks. Their notable achievements include [Achievements].`,
+  `Violence erupted late last night. Sources report that after an intense firefight with [Group 2], [Group 1] agents were seen hurrying a disheveled [Job Title] named [Name 1] out of the area.\n\nOur reporters attempted to follow the trail but lost track of the crew amid the busy streets.`,
+  `Whatever the truth, things came to a head last night when half a dozen [Members of Group 2] flooded into the street and attacked a heavily secured [Location or Vehicle Type]. [Group 1 Members], including [Relationship or Job Title] [Name 1], returned fire but weren't quick enough to stop [Group 2] from inflicting heavy damage.`,
+  `[Location] has long been described as [Adjective]. There have long been rumors that [Group 1] has been funneling [Noun]s into the area. [Law Enforcement Group] has investigated [Group 1]'s involvement several times but has never been able to confirm anything.\n\n"Our business ain't [Law Enforcement Group]'s business," [Group 1]'s spokesperson famously said earlier this year.`,
+  `Inside sources suggest that [Group 1] has quietly been hiring [Job Type]s since earlier this year — and that they're none too picky about who they hire.\n\nWhile the details remain unknown, we can confirm [Group 1] has amassed a collection of [Item Type] around one of their [Location Type] in [Location (Neighborhood)].`,
+  `Seems like someone finally crossed the fucking line, and we're here to bring you the tale! Or, we would be, if anyone could get their story straight.\n\nDuring last night's shootout at [Location] between [Group 1] and [Group 2], most bystanders fled. You know, as you do when bullets start flying.\n\nThe few who stuck around? This reporter is pretty sure they would've said anything we wanted to hear if it earned them a few eb.\n\nNobody even had their head on straight enough to agree on who started shit, but we can confirm at least one person, [Relationship or Job Title] [Name 1], was injured during the conflict.`,
+];
+
+const B3 = [
+  { headlines: ["NF1"], text: `As of this morning, [Group 1] reps claim to have moved [Relationship or Job Title] [Name 1] to a secure location.\n\n[Name 1]'s condition and the circumstances surrounding their disappearance remain a mystery. When asked for comment, [Group 1] merely stated that it will be some time before [Name 1] returns to public life but that they are optimistic they will make a full recovery. For reasons of personal security, [Name 1]'s location will remain a closely-kept secret while they recuperate.\n\n[Name 2] will be stepping up to perform all necessary duties in their absence.` },
+  { headlines: ["NF2"], text: `Update: A new report brings news of [Name 1]'s untimely demise. Exact circumstances of their death have not been disclosed. However, [Group 1] has asked anyone who wants to "do right by [Name 1]" to join them tonight at [Location]. Will this be a somber remembrance or a vengeful mob? Check back tomorrow for the latest!` },
+  { headlines: ["NF3"], text: `By the time [Law Enforcement Group] arrived, [Group 2 Members] had fled the scene, leaving nine dead in their wake, including four bystanders.\n\n[Group 1] has offered a reward to anyone who can name any of the attackers. See [Name 2] at [Location] for details.` },
+  { headlines: ["NF3","NF4"], text: `[Group 1] called for reinforcements and ultimately restored order, turning away offers of assistance from [Law Enforcement Group]. "They best not stick their nose where it don't belong," one of [Group 1]'s [Relationship or Job Title] commented to our reporters off the record.\n\nSeems [Group 1] is intent on handling things themselves! Check back tomorrow for more details as our award-winning reporters bring you more on this shocking series of events!` },
+  { headlines: ["NF3","NF5","NF6"], text: `The fighting was surprisingly short-lived. [Group 2] seemed to be preparing to storm the [Location Type], but quickly fell back, perhaps due to chatter that [Group 1]'s reinforcements were gunning it to get there.\n\nInterestingly, one bystander reported seeing a [Group 2 Member] making a getaway with a metal briefcase in hand. More details as we receive them!` },
+  { headlines: ["NF4"], text: `Meanwhile, the situation went from bad to worse for locals when a [Adjective] drone stored somewhere in [Group 2]'s hideout was activated. The machine rampaged through the area, crushing vehicles and bystanders caught in its path and bringing down the front wall of a nearby building before [Group 3] was able to neutralize it.\n\nWhen asked for comment, [Group 2]'s spokesperson merely said, "With innovation comes risk. We can only hope that the people of Night City realize how lucky they are to be on the cutting edge of such marvelous advancements."\n\n[Group 2] has offered to compensate the victims of this most recent mishap, provided they can properly document their losses and sign appropriate legal waivers.` },
+];
+
+const B4 = {
+  NF1: "[Name 1] Found Alive!",
+  NF2: "[Name 1] Found Dead!",
+  NF3: "Firefight at [Location]!",
+  NF4: "Rogue Drone Rampages Through [Location (Neighborhood)]!",
+  NF5: "Tragedy Strikes in [Location (Neighborhood)]!",
+  NF6: "Rivalry Between [Group 1] and [Group 2] Turns Violent!",
+};
+
+/* ── In Neon Lights (C) ─────────────────────────────────────── */
+const C1 = [
+  `[Name 1] continues to wow us! Their latest project may be their biggest achievement yet!`,
+  `We've gotten used to innovative, shocking performances from [Name 1], but their latest [Media Type] may be their most controversial yet.`,
+  `If you've been even half awake this year, you've likely caught wind of the smack talk between [Name 1] and [Name 2]. Once [Relationship Type], the two seem to have developed a bitter rivalry since [Incident].`,
+  `Earlier this month, we brought you shocking news about [Incident] in [Location]. Well, fear not, my adoring fans! I've done it again. Your favorite news hound has been sniffing out the details and, holy shit, is this one juicy and connected to the famous [Name 1]!`,
+  `[Name 2] must have cold feet after this past weekend's [Event Type]. To hear [Name 1] tell it, the [Disaster Type] that engulfed [Location] on Sunday started as an innocent prank between members of their respective crews.`,
+  `Fans got an early look at [Name 1]'s newest project yesterday when [Media Type] of their latest work hit the Data Pool.`,
+];
+
+const C2 = [
+  `Best known for [Achievements], [Name 1] sat down with our reporters to give us a sneak peek into their next big thing!`,
+  `While fans laud this new [Media Type] as [Adjective], [Adjective], and even [Adjective], critics have had harsher words. [Critic's Name]'s notoriously straightforward column even took a threatening turn. "If the [Venue] cancel the [Event Type], maybe someone will do us a favor and blow up the freakin' place before [Name 1] can inflict any more of this crap on us," [Critic's Name] wrote.`,
+  `This week's display takes the cake, though. [Name 2] called a cut in the middle of their [Event Type] on [Day of the Week] night to deliver a scathing litany of [Name 1]'s faults. Their complaints, screamed loudly for all the world to hear, ranged from [Petty Complaint] to [Crime].\n\nWhen asked for comment, [Name 1] responded, "It's too bad they can't get over how good I am, isn't it?"`,
+  `The buzz was about the [Media Type], hey, it's great! But it's the behind-the-scenes drama that's got us coming back for more.\n\n[Name 2]'s [Relationship Type] interrupted [Name 1]'s [Event] last night, and all we can say is, the fans [Feeling] them. In the two minutes and thirteen seconds before security dragged them into the back, [Name 2]'s [Relationship Type] made sure their presence at [Event] was more noteworthy than [Name 1]'s [Media Type].`,
+  `Those of you just tuning in now must be asking how things got this far. Well, we asked [Name 1] just that question!\n\n"Hey, choomba, you know how it is. It's the bizzzz," they told [Reporter's Name]. "It gets in your [Body Part]. Messes you up. All the attention. It makes you do crazy things."`,
+  `[Name 1]'s new [Media Type] is divisive. Most fans love it, but there are some who find the new content shocking and even appalling.\n\n"I've been a fan of [Name 1] forever," [Fan Name] told this reporter. "I can't believe they're doing something like this!"`,
+];
+
+const C3 = [
+  { headlines: ["NL1","NL2"], text: `In a surprising change of pace, [Name 1] laid out their plans for [Achievements] and all we can say is: Wow! Is there anything this superstar can't do?\n\nCheck back next week for an in-depth exclusive as we sit down with them to hear the inside scoop on how they got here and where they're going next. Watch out, Night City!` },
+  { headlines: ["NL1","NL2","NL6"], text: `While the critics are talking trash... I mean, hell, that's their job, isn't it?` },
+  { headlines: ["NL1","NL2","NL6"], text: `They may not be everyone's jam, but they're certainly jamming! The numbers don't lie: [Name 1] just might be the next big thing!` },
+  { headlines: ["NL3","NL4","NL5"], text: `Are there truly some darker secrets behind [Name 1]'s recent rise to fame?\n\nBuy the next issue for our [Day of the Week] night exclusive and decide for yourself!` },
+  { headlines: ["NL3","NL4","NL5"], text: `The fans have just one question: Just what will [Name 2] do next?!` },
+  { headlines: ["NL6"], text: `Whatever you think of the new [Media Type], one thing is for sure — [Name 1] didn't intend for it to hit the streets quite yet. The new content seems to have been released before it was finished. When asked what they were going to do about it, [Name 1] merely said, "I dunno, maybe I take out the doomba who released it for a nice steak, maybe I just take 'em out. They've got everyone talking about me but is it the sort of talk I want?" Will this chain of events turn violent?\n\nCheck back tomorrow for the latest coverage!` },
+];
+
+const C4 = {
+  NL1: "[Name 1] Does It Again!",
+  NL2: "[Name 1] Hits It Big!",
+  NL3: "Scandal in [Location]!",
+  NL4: "The Plot Thickens! Rumors About [Incident] Continue to Grow!",
+  NL5: "[Name 1] Tells All!",
+  NL6: "Leaked [Media Type] Leaves Fans Screaming!",
+};
+
+/* ── Help Wanted (D) ────────────────────────────────────────── */
+const D1 = [
+  `Are you fast and discrete? Capable of carrying many things at once? [Group 1/Organization] needs you!`,
+  `Do you know the streets of [Location (Neighborhood)] inside and out? Are your friends tired of hearing you boast about how you never get lost? Do you want to turn your knowledge into some eb?`,
+  `Are you known for your nerve? Does your stare alone make doombas rethink being born? Can you stop the weak in their tracks just by flexing your muscles?`,
+  `Are words your favorite weapon? Can you keep a straight face, even when folks are talking shit about you? Do you need to make some cash quickly? Well, look no further.`,
+  `Companions needed to accompany high-profile [Job Type] to upcoming social events. Make the boss happy. Make sure the client has a good time. Make sure they come home in one piece. Easy pay for the right choomba. Must be able to dress self.`,
+  `Are you fast as fuck? Know how to get shit done? Got a feel for which corners you can cut? Prominent [Job Type] is seeking backup for an upcoming event. Must be competent. Must supply your own gear.`,
+];
+
+const D2 = [
+  `Easy work, but the last three geniuses who thought they'd make the cut ... didn't. Willing to be more than generous with someone who isn't a waste of time.`,
+  `Discretion is an absolute priority. If you can't keep your mouth shut, don't bother. Are you the sort who feels like bragging once the job is done? Don't expect to be bragging for long. Privacy is of the utmost importance.`,
+  `Then [Group 1/Business] needs you!`,
+  `Only the best need apply. We reserve the right to shoot doombas who waste our time on sight.`,
+  `Requirements: Good fashion sense. Good manners. Working knowledge of [Area of Expertise].`,
+  `Must be a skilled multitasker. Opportunities for advancement for qualified applicants who perform well under pressure.`,
+];
+
+const D3 = [
+  { headlines: ["HW1","HW2","HW4","HW5","HW6"], text: `Think that's you? Come prove it. Fair warning: if you screw up, you're on your own. We only back winners.` },
+  { headlines: ["HW1","HW2","HW3","HW4","HW5","HW6"], text: `Do a good job and we'll hook you up with something money can't buy: tickets to next week's sold-out [Event] featuring [Performer or Sports Team].\n\nContact [Name 1] for details.` },
+  { headlines: ["HW1","HW2","HW3","HW4","HW5","HW6"], text: `Talk to [Name 1] at [Location], and be sure to mention this ad for an extra sign-on bonus!` },
+  { headlines: ["HW3","HW4"], text: `Think you have what it takes? Prove it. Stop by [Location] at [Date and Time]. Come prepared. We will test you.` },
+  { headlines: ["HW1","HW4","HW5","HW6"], text: `Easy pay for the right applicant. Bonus if you make [Group 1/Organization] look good while you're at it.\n\nContact [Name 1] for details.` },
+  { headlines: ["HW1","HW2","HW3","HW4","HW5","HW6"], text: `Interested? Stop by [Location] after closing to talk shop. Come armed. It isn't the best neighborhood and if you can't make it there alive we don't want you anyway.` },
+];
+
+const D4 = {
+  HW1: '"Delivery" Help Needed!',
+  HW2: "Bouncers Needed at [Location]",
+  HW3: "Seeking: Someone with Some Fucking Discretion",
+  HW4: "You: Needing Some Quick Cash. Us: Looking to Grow the Business.",
+  HW5: "Help Wanted for Upcoming Gig",
+  HW6: "[Job Type] Needed",
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+const S = {
+  type: null,       // 'newsflash' | 'neonlights' | 'helpwanted'
+  intro: null,      // 0-5
+  body: null,
+  conclusion: null,
+  headline: null,   // e.g. "NF1"
+  byline: null,     // 0..11
+  source: 'nct',    // 'nct' | 'ao'
+  fields: {},       // fieldName -> value
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+const d6 = () => Math.floor(Math.random() * 6);  // 0-indexed
+
+function getTables() {
+  switch (S.type) {
+    case 'newsflash':  return { intro: B1, body: B2, conc: B3, hl: B4 };
+    case 'neonlights': return { intro: C1, body: C2, conc: C3, hl: C4 };
+    case 'helpwanted': return { intro: D1, body: D2, conc: D3, hl: D4 };
+    default: return null;
+  }
+}
+
+function extractFields(text) {
+  const re = /\[([^\]]+)\]/g, set = new Set();
+  let m;
+  while ((m = re.exec(text)) !== null) set.add(m[1]);
+  return [...set];
+}
+
+function getAllRawText() {
+  if (!S.type) return '';
+  const t = getTables();
+  const parts = [];
+  if (S.intro    !== null) parts.push(t.intro[S.intro]);
+  if (S.body     !== null) parts.push(t.body[S.body]);
+  if (S.conclusion !== null) parts.push(t.conc[S.conclusion].text);
+  if (S.headline  !== null && t.hl[S.headline]) parts.push(t.hl[S.headline]);
+  return parts.join(' ');
+}
+
+function renderBrackets(text) {
+  return text.replace(/\[([^\]]+)\]/g, (_, name) => {
+    const v = S.fields[name];
+    if (v) return `<span class="fld-filled">${escHtml(v)}</span>`;
+    return `<span class="fld-empty">[${escHtml(name)}]</span>`;
+  });
+}
+
+function textToHtml(text) {
+  return text.split('\n\n').map(p =>
+    `<p class="art-p">${renderBrackets(p)}</p>`
+  ).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, dur = 1800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════ */
+
+function renderAll() {
+  renderTypeBtns();
+  renderSections();
+  renderHeadlines();
+  renderFields();
+  renderArticle();
+}
+
+function renderTypeBtns() {
+  ['newsflash','neonlights','helpwanted'].forEach(tp => {
+    document.getElementById('tbtn-' + tp)
+      .classList.toggle('active', S.type === tp);
+  });
+}
+
+function renderSections() {
+  const show = !!S.type;
+  ['intro','body','conclusion'].forEach(sec => {
+    document.getElementById('sec-' + sec).style.display = show ? 'block' : 'none';
+  });
+  if (!show) return;
+
+  const t = getTables();
+  renderEntries('intro', t.intro);
+  renderEntries('body',  t.body);
+  renderEntries('conclusion', t.conc);
+}
+
+function renderEntries(sec, arr) {
+  const cur = S[sec === 'conclusion' ? 'conclusion' : sec];
+  const el = document.getElementById('entries-' + sec);
+  el.innerHTML = arr.map((item, i) => {
+    const raw = typeof item === 'string' ? item : item.text;
+    const preview = raw.replace(/\n/g,' ');
+    const short = preview.length > 115 ? preview.slice(0, 115) + '…' : preview;
+    return `<div class="entry ${cur === i ? 'active' : ''}"
+                 onclick="pickEntry('${sec}',${i})">
+              <span class="num">${i+1}</span>${escHtml(short)}
+            </div>`;
+  }).join('');
+}
+
+function renderHeadlines() {
+  const sec = document.getElementById('sec-headlines');
+  if (!S.type || S.conclusion === null) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const t = getTables();
+  const suggested = t.conc[S.conclusion].headlines;
+  const list = document.getElementById('hl-list');
+  list.innerHTML = Object.entries(t.hl).map(([code, text]) => {
+    const isSug = suggested.includes(code);
+    const isSel = S.headline === code;
+    return `<div class="hl-item ${isSel ? 'active' : ''} ${isSug ? 'suggested' : ''}"
+                 onclick="pickHeadline('${code}')">
+              <span class="hl-code">${code}</span>
+              <span>${isSug ? '★ ' : ''}${escHtml(text)}</span>
+            </div>`;
+  }).join('');
+}
+
+function renderFields() {
+  const sec = document.getElementById('sec-fields');
+  const fields = extractFields(getAllRawText());
+  if (fields.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const form = document.getElementById('fields-form');
+  form.innerHTML = fields.map(f =>
+    `<div class="field-row">
+       <label class="field-lbl">${escHtml(f)}</label>
+       <input class="field-inp" type="text"
+              value="${escHtml(S.fields[f] || '')}"
+              placeholder="Fill in…"
+              data-field="${escHtml(f)}" />
+     </div>`
+  ).join('');
+
+  // Attach listeners
+  form.querySelectorAll('.field-inp').forEach(inp => {
+    inp.addEventListener('input', e => {
+      S.fields[e.target.getAttribute('data-field')] = e.target.value;
+      renderArticle();
+    });
+  });
+}
+
+function renderBylines() {
+  const el = document.getElementById('byline-list');
+  el.innerHTML = BYLINES.map((b, i) =>
+    `<div class="byline-item ${S.byline === i ? 'active' : ''}" onclick="pickByline(${i})">
+       <span class="byline-name">${escHtml(b.name)}</span>
+       <span class="byline-beat">${escHtml(b.beat)}</span>
+     </div>`
+  ).join('');
+}
+
+function renderArticle() {
+  const ph = document.getElementById('ph-msg');
+  const art = document.getElementById('art-content');
+
+  if (!S.type || (S.intro === null && S.body === null && S.conclusion === null)) {
+    ph.style.display = 'block';
+    art.style.display = 'none';
+    return;
+  }
+
+  ph.style.display = 'none';
+  art.style.display = 'block';
+
+  const t = getTables();
+
+  // Headline
+  const hlEl = document.getElementById('art-hl');
+  if (S.headline && t.hl[S.headline]) {
+    hlEl.innerHTML = renderBrackets(t.hl[S.headline]);
+    hlEl.style.display = 'block';
+  } else {
+    hlEl.style.display = 'none';
+  }
+
+  // Byline
+  const bylEl = document.getElementById('art-byl');
+  if (S.byline !== null) {
+    const b = BYLINES[S.byline];
+    bylEl.textContent = `By ${b.name} · ${b.beat}`;
+    bylEl.style.display = 'block';
+  } else {
+    bylEl.style.display = 'none';
+  }
+
+  // Sections
+  const parts = [
+    { id: 'art-intro', idx: S.intro,       arr: t.intro, isConc: false },
+    { id: 'art-body',  idx: S.body,        arr: t.body,  isConc: false },
+    { id: 'art-conc',  idx: S.conclusion,  arr: t.conc,  isConc: true  },
+  ];
+
+  parts.forEach(({ id, idx, arr, isConc }) => {
+    const el = document.getElementById(id);
+    if (idx !== null) {
+      const raw = isConc ? arr[idx].text : arr[idx];
+      el.innerHTML = textToHtml(raw);
+      el.style.display = 'block';
+    } else {
+      el.innerHTML = '';
+      el.style.display = 'none';
+    }
+  });
+
+  document.getElementById('art-sep1').style.display =
+    (S.intro !== null && S.body !== null) ? 'block' : 'none';
+  document.getElementById('art-sep2').style.display =
+    (S.body !== null && S.conclusion !== null) ? 'block' : 'none';
+}
+
+function renderSource() {
+  document.getElementById('src-nct').classList.toggle('active', S.source === 'nct');
+  document.getElementById('src-ao').classList.toggle('active', S.source === 'ao');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════════════════ */
+
+function selectType(tp) {
+  S.type = tp; S.intro = null; S.body = null;
+  S.conclusion = null; S.headline = null; S.fields = {};
+  ['intro','body','conclusion'].forEach(s => {
+    document.getElementById('dv-' + s).textContent = '–';
+  });
+  renderAll();
+}
+
+function rollType() {
+  const r = d6();
+  selectType(r < 2 ? 'newsflash' : r < 4 ? 'neonlights' : 'helpwanted');
+}
+
+function rollSection(sec) {
+  if (!S.type) return;
+  const idx = d6();
+  document.getElementById('dv-' + sec).textContent = idx + 1;
+  pickEntry(sec, idx);
+}
+
+function pickEntry(sec, idx) {
+  const key = sec === 'conclusion' ? 'conclusion' : sec;
+  S[key] = idx;
+  document.getElementById('dv-' + sec).textContent = idx + 1;
+
+  // Auto-select headline from conclusion suggestion
+  if (sec === 'conclusion') {
+    const t = getTables();
+    const sug = t.conc[idx].headlines;
+    if (sug.length && (!S.headline || !sug.includes(S.headline))) {
+      S.headline = sug[0];
+    }
+  }
+  renderAll();
+}
+
+function pickHeadline(code) {
+  S.headline = code;
+  renderHeadlines();
+  renderArticle();
+  renderFields();
+}
+
+function pickByline(i) {
+  S.byline = i;
+  renderBylines();
+  renderArticle();
+}
+
+function randomByline() {
+  pickByline(Math.floor(Math.random() * BYLINES.length));
+}
+
+function clearFields() {
+  S.fields = {};
+  renderFields();
+  renderArticle();
+}
+
+function setSource(src) {
+  S.source = src;
+  renderSource();
+}
+
+function rollAll() {
+  const r = d6();
+  S.type = r < 2 ? 'newsflash' : r < 4 ? 'neonlights' : 'helpwanted';
+  S.intro = d6(); S.body = d6(); S.conclusion = d6();
+  S.fields = {};
+
+  const t = getTables();
+  const sug = t.conc[S.conclusion].headlines;
+  S.headline = sug[Math.floor(Math.random() * sug.length)];
+  S.byline = Math.floor(Math.random() * BYLINES.length);
+
+  ['intro','body','conclusion'].forEach(s => {
+    const key = s === 'conclusion' ? 'conclusion' : s;
+    document.getElementById('dv-' + s).textContent = S[key] + 1;
+  });
+
+  renderAll();
+  renderBylines();
+  showToast('▶ Screamsheet generated!');
+}
+
+function resetAll() {
+  S.type = null; S.intro = null; S.body = null;
+  S.conclusion = null; S.headline = null; S.byline = null;
+  S.fields = {};
+  ['intro','body','conclusion'].forEach(s => {
+    document.getElementById('dv-' + s).textContent = '–';
+  });
+  renderAll();
+  renderBylines();
+}
+
+function copyArticle() {
+  if (!S.type) { showToast('No article generated yet.'); return; }
+  const t = getTables();
+  const lines = [];
+
+  if (S.headline && t.hl[S.headline]) {
+    let hl = t.hl[S.headline];
+    extractFields(hl).forEach(f => { if (S.fields[f]) hl = hl.replaceAll(`[${f}]`, S.fields[f]); });
+    lines.push(hl.toUpperCase());
+    lines.push('');
+  }
+  if (S.byline !== null) {
+    const b = BYLINES[S.byline];
+    lines.push(`By ${b.name}`);
+    lines.push('');
+  }
+
+  const secs = [
+    S.intro    !== null ? t.intro[S.intro] : null,
+    S.body     !== null ? t.body[S.body]   : null,
+    S.conclusion !== null ? t.conc[S.conclusion].text : null,
+  ];
+
+  secs.forEach(raw => {
+    if (!raw) return;
+    let text = raw;
+    extractFields(text).forEach(f => {
+      if (S.fields[f]) text = text.replaceAll(`[${f}]`, S.fields[f]);
+    });
+    lines.push(text);
+    lines.push('');
+  });
+
+  navigator.clipboard.writeText(lines.join('\n').trim()).then(
+    () => showToast('✓ Copied to clipboard!'),
+    () => showToast('⚠ Copy failed — try manually.')
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVE IMAGE
+═══════════════════════════════════════════════════════════════ */
+function saveImage() {
+  if (!S.type) { showToast('Generate an article first.'); return; }
+  const target = document.querySelector('.panel-center');
+  if (!target) { showToast('Nothing to capture.'); return; }
+
+  showToast('📸 Capturing…');
+
+  // Temporarily hide the scanline overlay ::after pseudo-element by adding a class
+  target.classList.add('no-scanline');
+
+  html2canvas(target, {
+    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-500').trim() || '#191a1e',
+    useCORS: true,
+    scale: 2,
+    scrollX: 0,
+    scrollY: -window.scrollY,
+    ignoreElements: el => el.classList && el.classList.contains('panel-center') ? false : false
+  }).then(canvas => {
+    target.classList.remove('no-scanline');
+    const link = document.createElement('a');
+    const slug = (S.headline !== null
+      ? (getTables().hl[S.headline] || 'screamsheet').replace(/\[.*?\]/g,'').trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,40)
+      : 'screamsheet');
+    link.download = `screamsheet-${slug}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('✓ Image saved!');
+  }).catch(() => {
+    target.classList.remove('no-scanline');
+    showToast('⚠ Capture failed.');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+renderBylines();
+renderAll();
+renderSource();
+</script>
+
+<!-- ─── Footer ───────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <span style="color:#e8615a;">Cyberpunk RED Screamsheet Generator is unofficial content provided under the Homebrew Content Policy of R. Talsorian Games and is not approved or endorsed by RTG. This content references materials that are the property of R. Talsorian Games and its licensees.</span>
+</footer>
+
+</body>
+</html>
